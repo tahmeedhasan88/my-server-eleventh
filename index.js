@@ -33,43 +33,49 @@ async function run() {
     await client.connect()
 
     const db = client.db('eleventh_db');
-    const productsCollection = db.collection('products');
+    const donationCollection = db.collection('donation');
 
 
-    app.get('/products', async(req, res) => {
+    app.get('/donation', async(req, res) => {
+      const query = {}
+      const {email} = req.query;
 
-      const cursor = productsCollection.find();
+      if(email){
+        query.requesterEmail = email
+      }
+
+      const cursor = donationCollection.find(query);
       const result = await cursor.toArray();
       res.send(result)
 
     })
 
 
-    app.get('/products/:id', async(req, res) => {
+    app.get('/donation/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
-      const result = await productsCollection.findOne(query)
+      const result = await donationCollection.findOne(query)
       res.send(result)
     })
 
-    app.post('/products', async(req,res) =>{
-        const newProducts = req.body;
-        const result = await productsCollection.insertOne(newProducts);
+    app.post('/donation', async(req,res) =>{
+        const newDonation = req.body;
+        const result = await donationCollection.insertOne(newDonation);
         res.send(result);
     })
 
 
-    app.patch('/products/:id', async(req, res) => {
+    app.patch('/donation/:id', async(req, res) => {
       const id = req.params.id;
-      const productUpdate = req.body;
+      const donationUpdate = req.body;
       const query = {_id: new ObjectId(id)}
       const update = {
         $set:{
-          name: productUpdate.name,
-          price: productUpdate.price
+          name: donationUpdate.name,
+          price: donationUpdate.price
         }
       }
-      const result = await productsCollection.updateOne(query, update)
+      const result = await donationCollection.updateOne(query, update)
       res.send(result);
 
     })
@@ -77,11 +83,11 @@ async function run() {
 
 
 
-    app.delete('/products/:id', async(req, res) => {
+    app.delete('/donation/:id', async(req, res) => {
 
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
-      const result = await productsCollection.deleteOne(query);
+      const result = await donationCollection.deleteOne(query);
       res.send(result)
 
     })
