@@ -39,7 +39,8 @@ async function run() {
 
     const db = client.db('eleventh_db');
     const donationCollection = db.collection('donation');
-    const fundingCollection = db.collection('funding');
+    const fundingDetails = db.collection('fund-details');
+    const allFUndings= db.collection('allFundings');
     
 
     app.get('/donation', async (req, res) => {
@@ -101,26 +102,48 @@ async function run() {
 
     // Payment method
 
-    app.post('/funding', async (req, res) => {
-      const newFunding = req.body;
-      const result = await fundingCollection.insertOne(newFunding);
-      res.send(result);
+    app.get('/fund-details', async (req, res) => {
+      const query = {}
+      const { email } = req.query;
+
+      if (email) {
+        query.requesterEmail = email
+      }
+
+      const cursor = fundingDetails.find(query);
+      const result = await cursor.toArray();
+      res.send(result)
+
     })
 
 
 
-    app.post('/create-checkout-session', async (req, res) => {
-      const fundInfo= req.body;
-      const amount = parseInt(fundInfo.cost)*100
-  const session = await stripe.checkout.sessions.create({
+
+app.post('/create-checkout-session', async (req, res) => {
+  const paymentInfo= req.body;
+  const amount = parseInt(paymentInfo.cost)*100
+
+
+      const fundingData = {
+      fundName: paymentInfo.fundName,
+      fundingId: paymentInfo.fundingId,
+      amount: paymentInfo.cost,
+      email: paymentInfo.customerEmail,
+      status: 'pending',
+      date: new Date()
+       };
+
+      await allFUndings.insertOne(fundingData);
+
+
+    const session = await stripe.checkout.sessions.create({
     line_items: [
       {
-        // Provide the exact Price ID (for example, price_1234) of the product you want to sell
         price_data: {
           currency:'USD',
           unit_amount: amount,
           product_data: {
-            name: fundInfo.requesterEmail
+            name: paymentInfo.fundName
 
           }
         },
@@ -128,17 +151,21 @@ async function run() {
         quantity: 1,
       },
     ],
-    user_email: fundInfo.requesterEmail,
+    
     mode: 'payment',
     metadata:{
-      donationId: fundInfo.donationId
+      fundingId: paymentInfo.fundingId,
     },
-    success_url: `${process.env.SITE_DOMAIN}?success`,
-    cancel_url: `${process.env.SITE_DOMAIN}?canceled`,
+   customer_email: paymentInfo.customerEmail,
+    success_url: `${process.env.SITE_DOMAIN}/payment-success`,
+    cancel_url: `${process.env.SITE_DOMAIN}/payment-canceled`,
   });
   console.log(session)
- res.redirect(303, session.url);
+ res.send({url: session.url})
 });
+
+
+
 //------------------------------------------------------
 
 
