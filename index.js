@@ -40,7 +40,7 @@ async function run() {
     const db = client.db('eleventh_db');
     const donationCollection = db.collection('donation');
     const fundingDetails = db.collection('fund-details');
-    const allFUndings= db.collection('allFundings');
+    const allFundings = db.collection('allFundings');
     
 
     app.get('/donation', async (req, res) => {
@@ -133,7 +133,7 @@ app.post('/create-checkout-session', async (req, res) => {
       date: new Date()
        };
 
-      await allFUndings.insertOne(fundingData);
+      await allFundings.insertOne(fundingData);
 
 
     const session = await stripe.checkout.sessions.create({
@@ -165,6 +165,20 @@ app.post('/create-checkout-session', async (req, res) => {
 });
 
 
+
+
+
+app.get('/allFundings', async (req, res) => {
+      const query = {};
+      const { email } = req.query;
+
+      if (email) {
+        query.email = email;
+      }
+
+      const result = await allFundings.find(query).toArray();
+      res.send(result);
+    });
 
 //------------------------------------------------------
 
