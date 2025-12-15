@@ -4,6 +4,15 @@ require('dotenv').config();
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000;
+const crypto = require('crypto');
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./my-eleventh-assign-adminsdk.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
@@ -13,6 +22,27 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET);
 //middleware 
 app.use(cors());
 app.use(express.json())
+
+const verifyFBToken = async( req, res, next) =>{
+
+  const token = req.headers.authorization;
+
+  if(!token){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+  try{
+    const idToken = token.split(' ')[1];
+    const decoded = await admin.auth().verifyIdToken(idToken)
+    console.log('decoded token', decoded)
+    next();
+  }
+  catch(error){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+
+  
+
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ro9lg2o.mongodb.net/?appName=Cluster0`;
@@ -168,9 +198,11 @@ app.post('/create-checkout-session', async (req, res) => {
 
 
 
-app.get('/allFundings', async (req, res) => {
+app.get('/allFundings', verifyFBToken, async (req, res) => {
       const query = {};
       const { email } = req.query;
+
+      // console.log('I want to see headers', req.headers)
 
       if (email) {
         query.email = email;
