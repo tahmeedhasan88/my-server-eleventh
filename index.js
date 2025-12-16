@@ -34,6 +34,7 @@ const verifyFBToken = async( req, res, next) =>{
     const idToken = token.split(' ')[1];
     const decoded = await admin.auth().verifyIdToken(idToken)
     console.log('decoded token', decoded)
+    req.decoded_email = decoded.email;
     next();
   }
   catch(error){
@@ -68,11 +69,49 @@ async function run() {
     await client.connect()
 
     const db = client.db('eleventh_db');
+    const userCollection = db.collection('users');
+    const donorsCollection = db.collection('donors');
     const donationCollection = db.collection('donation');
     const fundingDetails = db.collection('fund-details');
     const allFundings = db.collection('allFundings');
+
+
+    //User related Apis
+
+    app.post('/users', async(req, res) =>{
+      const user = req.body;
+      user.role = 'user';
+      user.createdAt = new Date();
+      const email = user.email;
+      const userExist = await userCollection.findOne({email})
+
+
+      if(userExist){
+        return res.send({message: 'user exists'})
+      }
+      
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+
+    })
     
 
+    //------------------------------- 
+
+
+    //Donors related apis
+    app.post('/donors', async(req, res) =>{
+      const donor = req.body;
+      donor.status = 'pending';
+      donor.createdAt = new Date();
+
+      const result = await donorsCollection.insertOne(donor);
+
+      res.send(result);
+    })
+
+
+    //--------------------------------
     app.get('/donation', async (req, res) => {
       const query = {}
       const { email } = req.query;
@@ -206,6 +245,10 @@ app.get('/allFundings', verifyFBToken, async (req, res) => {
 
       if (email) {
         query.email = email;
+
+        if(email !==req.decoded_email){
+          return res.status(403).send({message: 'forbidden access'})
+        }
       }
 
       const result = await allFundings.find(query).toArray();
