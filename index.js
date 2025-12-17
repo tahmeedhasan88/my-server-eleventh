@@ -20,7 +20,9 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 
 //middleware 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://my-server-eleventh.vercel.app/']
+}));
 app.use(express.json())
 
 const verifyFBToken = async( req, res, next) =>{
@@ -107,6 +109,16 @@ async function run() {
 
       const result = await donorsCollection.insertOne(donor);
 
+      res.send(result);
+    })
+
+    app.get('/donors', async(req, res) => {
+      const query = {}
+      if(req.query.status){
+        query.status = req.query.status;
+      }
+      const cursor = donorsCollection.find(query)
+      const result = await cursor.toArray();
       res.send(result);
     })
 
