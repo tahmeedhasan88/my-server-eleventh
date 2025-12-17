@@ -7,18 +7,20 @@ const port = process.env.PORT || 3000;
 const crypto = require('crypto');
 const admin = require("firebase-admin");
 
-let serviceAccount = require("./my-eleventh-assign-adminsdk.json");
+let serviceAccount;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // For Vercel production: parse the JSON from the env variable
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 } else {
-  // Only for local development
+  // For local development: require the JSON file
   serviceAccount = require("./my-eleventh-assign-adminsdk.json");
 }
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
+
 
 
 
