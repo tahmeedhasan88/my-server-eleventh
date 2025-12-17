@@ -5,7 +5,6 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000;
 const crypto = require('crypto');
-const admin = require("firebase-admin");
 
 const admin = require("firebase-admin");
 
