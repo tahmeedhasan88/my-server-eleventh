@@ -10,16 +10,17 @@ const admin = require("firebase-admin");
 let serviceAccount;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  // For Vercel production: parse the JSON from the env variable
+  // Production: parse JSON from environment variable
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 } else {
-  // For local development: require the JSON file
+  // Local development: require the JSON file
   serviceAccount = require("./my-eleventh-assign-adminsdk.json");
 }
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
+
 
 
 
