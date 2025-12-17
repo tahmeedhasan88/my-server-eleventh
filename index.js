@@ -7,15 +7,19 @@ const port = process.env.PORT || 3000;
 const crypto = require('crypto');
 const admin = require("firebase-admin");
 
-const serviceAccount = require("./my-eleventh-assign-adminsdk.json");
+let serviceAccount = require("./my-eleventh-assign-adminsdk.json");
 
-
-
-
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  // Only for local development
+  serviceAccount = require("./my-eleventh-assign-adminsdk.json");
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
+
 
 
 
