@@ -10,21 +10,19 @@ const admin = require("firebase-admin");
 let serviceAccount;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  // Production: parse JSON from environment variable
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+  // 🔴 THIS LINE IS REQUIRED
+  serviceAccount.private_key =
+    serviceAccount.private_key.replace(/\\n/g, '\n');
+
 } else {
-  // Local development: require the JSON file
   serviceAccount = require("./my-eleventh-assign-adminsdk.json");
 }
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
-
-
-
-
-
 
 
 
