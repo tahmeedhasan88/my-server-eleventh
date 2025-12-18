@@ -26,17 +26,12 @@ admin.initializeApp({
 
 
 
-
-
-
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 
 
 //middleware 
-app.use(cors({
-  origin: ['http://localhost:5173', 'https://my-server-eleventh.vercel.app/']
-}));
+app.use(cors({ origin: '*' }));
 app.use(express.json())
 
 const verifyFBToken = async( req, res, next) =>{
