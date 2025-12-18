@@ -17,7 +17,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     serviceAccount.private_key.replace(/\\n/g, '\n');
 
 } else {
-  serviceAccount = require("/my-eleventh-assign-adminsdk.json");
+  serviceAccount = require("./my-eleventh-assign-adminsdk.json");
 }
 
 admin.initializeApp({
