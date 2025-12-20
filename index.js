@@ -12,7 +12,6 @@ let serviceAccount;
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-  // 🔴 THIS LINE IS REQUIRED
   serviceAccount.private_key =
     serviceAccount.private_key.replace(/\\n/g, '\n');
 
@@ -24,9 +23,8 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-
-
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
+
 
 
 
@@ -52,8 +50,6 @@ const verifyFBToken = async( req, res, next) =>{
     return res.status(401).send({message: 'unauthorized access'})
   }
 
-  
-
 }
 
 
@@ -67,7 +63,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
 
 
 app.get('/', (req, res) => {
@@ -87,24 +82,51 @@ async function run() {
     const allFundings = db.collection('allFundings');
 
 
+
+
+
+
     //User related Apis
 
-    app.post('/users', async(req, res) =>{
-      const user = req.body;
-      user.role = 'user';
-      user.createdAt = new Date();
-      const email = user.email;
-      const userExist = await userCollection.findOne({email})
+  app.post('/users', async(req, res) =>{
+  const user = req.body;
+
+  const email = user.email;
+  const userExist = await userCollection.findOne({ email });
+
+  if(userExist){
+    return res.send({ message: 'user exists' });
+  }
+
+  const newUser = {
+    name: user.name || '',
+    email: email,
+    role: 'user', 
+    status: 'active',
+    createdAt: new Date()
+  }
+  const result = await userCollection.insertOne(newUser);
+  res.send(result);
+});
 
 
-      if(userExist){
-        return res.send({message: 'user exists'})
-      }
-      
-      const result = await userCollection.insertOne(user);
-      res.send(result);
 
-    })
+app.get('/users/role/:email', verifyFBToken, async (req, res) => {
+  const email = req.params.email;
+
+  if (email !== req.decoded_email) {
+    return res.status(403).send({ message: 'forbidden access' });
+  }
+
+  const user = await userCollection.findOne({ email });
+
+  if (!user) {
+    return res.send({ role: null });
+  }
+
+  res.send({ role: user.role });
+});
+
     
 
     //------------------------------- 
