@@ -197,13 +197,15 @@ app.patch('/users/admin/:id', verifyFBToken, async (req, res) => {
   }
 
   const id = req.params.id;
-  const result = await userCollection.updateOne(
+  const updatedUser = await userCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
-    { $set: { role: 'admin' } }
+    { $set: { role: 'admin' } },
+    { returnDocument: 'after' } 
   );
 
-  res.send(result);
+  res.send(updatedUser.value);
 });
+
 
 
 //Donor making function apis -----   
@@ -211,18 +213,15 @@ app.patch('/users/donor/:id', verifyFBToken, async (req, res) => {
   const requester = await userCollection.findOne({
     email: req.decoded_email
   });
-
-  if (requester?.role !== 'admin') {
-    return res.status(403).send({ message: 'forbidden' });
-  }
+  if (requester?.role !== 'admin') return res.status(403).send({ message: 'forbidden' });
 
   const id = req.params.id;
-  const result = await userCollection.updateOne(
+  const updatedUser = await userCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
-    { $set: { role: 'donor' } }
+    { $set: { role: 'donor' } },
+    { returnDocument: 'after' }
   );
-
-  res.send(result);
+  res.send(updatedUser.value);
 });
 
 
@@ -231,18 +230,15 @@ app.patch('/users/volunteer/:id', verifyFBToken, async (req, res) => {
   const requester = await userCollection.findOne({
     email: req.decoded_email
   });
-
-  if (requester?.role !== 'admin') {
-    return res.status(403).send({ message: 'forbidden' });
-  }
+  if (requester?.role !== 'admin') return res.status(403).send({ message: 'forbidden' });
 
   const id = req.params.id;
-  const result = await userCollection.updateOne(
+  const updatedUser = await userCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
-    { $set: { role: 'volunteer' } }
+    { $set: { role: 'volunteer' } },
+    { returnDocument: 'after' }
   );
-
-  res.send(result);
+  res.send(updatedUser.value);
 });
 
 
@@ -275,6 +271,15 @@ app.post('/donors', verifyFBToken, async (req, res) => {
 
 
 //--------------------------------------------------------- 
+
+//update
+
+
+
+
+
+
+
 
 
     app.get('/donation', async (req, res) => {
