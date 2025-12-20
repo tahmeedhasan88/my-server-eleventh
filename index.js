@@ -65,6 +65,45 @@ const client = new MongoClient(uri, {
 });
 
 
+//verification related middleware apis-- 
+const verifyAdmin = async (req, res, next) => {
+  const user = await userCollection.findOne({
+    email: req.decoded_email
+  });
+
+  if (user?.role !== 'admin') {
+    return res.status(403).send({ message: 'admin only' });
+  }
+  next();
+};
+
+const verifyDonor = async (req, res, next) => {
+  const user = await userCollection.findOne({
+    email: req.decoded_email
+  });
+
+  if (user?.role !== 'donor') {
+    return res.status(403).send({ message: 'donor only' });
+  }
+  next();
+};
+
+const verifyVolunteer = async (req, res, next) => {
+  const user = await userCollection.findOne({
+    email: req.decoded_email
+  });
+
+  if (user?.role !== 'volunteer') {
+    return res.status(403).send({ message: 'volunteer only' });
+  }
+  next();
+};
+
+
+
+//------------------------------------------------------
+
+
 app.get('/', (req, res) => {
   res.send('my eleventh server is runningggggg!!!')
 })
@@ -80,6 +119,9 @@ async function run() {
     const donationCollection = db.collection('donation');
     const fundingDetails = db.collection('fund-details');
     const allFundings = db.collection('allFundings');
+
+
+
 
 
 
@@ -109,6 +151,21 @@ async function run() {
   res.send(result);
 });
 
+app.get('/users', verifyFBToken, async (req, res) => {
+  const query = {};
+  const { email } = req.query;
+
+  if (email) {
+    query.email = email;
+  }
+
+  try {
+    const users = await userCollection.find(query).toArray();
+    res.send(users);
+  } catch (error) {
+    res.status(500).send({ message: 'Failed to fetch users', error });
+  }
+});
 
 
 app.get('/users/role/:email', verifyFBToken, async (req, res) => {
@@ -127,34 +184,99 @@ app.get('/users/role/:email', verifyFBToken, async (req, res) => {
   res.send({ role: user.role });
 });
 
-    
 
-    //------------------------------- 
+
+//Admin making function apis -----   
+app.patch('/users/admin/:id', verifyFBToken, async (req, res) => {
+  const requester = await userCollection.findOne({
+    email: req.decoded_email
+  });
+
+  if (requester?.role !== 'admin') {
+    return res.status(403).send({ message: 'forbidden' });
+  }
+
+  const id = req.params.id;
+  const result = await userCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { role: 'admin' } }
+  );
+
+  res.send(result);
+});
+
+
+//Donor making function apis -----   
+app.patch('/users/donor/:id', verifyFBToken, async (req, res) => {
+  const requester = await userCollection.findOne({
+    email: req.decoded_email
+  });
+
+  if (requester?.role !== 'admin') {
+    return res.status(403).send({ message: 'forbidden' });
+  }
+
+  const id = req.params.id;
+  const result = await userCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { role: 'donor' } }
+  );
+
+  res.send(result);
+});
+
+
+//Volunteer making function apis -----    
+app.patch('/users/volunteer/:id', verifyFBToken, async (req, res) => {
+  const requester = await userCollection.findOne({
+    email: req.decoded_email
+  });
+
+  if (requester?.role !== 'admin') {
+    return res.status(403).send({ message: 'forbidden' });
+  }
+
+  const id = req.params.id;
+  const result = await userCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { role: 'volunteer' } }
+  );
+
+  res.send(result);
+});
+
+
+
+//----------------------------------------------------- 
+
+
+
+
+
+
 
 
     //Donors related apis
-    app.post('/donors', async(req, res) =>{
-      const donor = req.body;
-      donor.status = 'pending';
-      donor.createdAt = new Date();
+    
+app.post('/donors', verifyFBToken, async (req, res) => {
+  const donor = req.body;
 
-      const result = await donorsCollection.insertOne(donor);
+  if (donor.email !== req.decoded_email) {
+    return res.status(403).send({ message: 'forbidden' });
+  }
 
-      res.send(result);
-    })
+  donor.status = 'pending';
+  donor.createdAt = new Date();
 
-    app.get('/donors', async(req, res) => {
-      const query = {}
-      if(req.query.status){
-        query.status = req.query.status;
-      }
-      const cursor = donorsCollection.find(query)
-      const result = await cursor.toArray();
-      res.send(result);
-    })
+  const result = await donorsCollection.insertOne(donor);
+  res.send(result);
+});
 
 
-    //--------------------------------
+
+//--------------------------------------------------------- 
+
+
     app.get('/donation', async (req, res) => {
       const query = {}
       const { email } = req.query;
@@ -199,9 +321,6 @@ app.get('/users/role/:email', verifyFBToken, async (req, res) => {
 
     })
 
-
-
-
     app.delete('/donation/:id', async (req, res) => {
 
       const id = req.params.id;
@@ -210,6 +329,19 @@ app.get('/users/role/:email', verifyFBToken, async (req, res) => {
       res.send(result)
 
     })
+
+
+//protected routes-- 
+app.get('/admin-stats',
+  verifyFBToken,
+  verifyAdmin,
+  async (req, res) => {
+    const users = await userCollection.countDocuments();
+    res.send({ users });
+  }
+);
+
+
 
 
     // Payment method
@@ -227,8 +359,6 @@ app.get('/users/role/:email', verifyFBToken, async (req, res) => {
       res.send(result)
 
     })
-
-
 
 
 app.post('/create-checkout-session', async (req, res) => {
