@@ -274,14 +274,6 @@ app.post('/donors', verifyFBToken, async (req, res) => {
 
 //update
 
-
-
-
-
-
-
-
-
     app.get('/donation', async (req, res) => {
       const query = {}
       const { email } = req.query;
@@ -312,19 +304,18 @@ app.post('/donors', verifyFBToken, async (req, res) => {
 
 
     app.patch('/donation/:id', async (req, res) => {
-      const id = req.params.id;
-      const donationUpdate = req.body;
-      const query = { _id: new ObjectId(id) }
-      const update = {
-        $set: {
-          name: donationUpdate.name,
-          price: donationUpdate.price
-        }
-      }
-      const result = await donationCollection.updateOne(query, update)
-      res.send(result);
+    const id = req.params.id;
+    const { status } = req.body;
 
-    })
+    const query = { _id: new ObjectId(id) };
+    const update = {
+    $set: { status }
+    };
+
+    const result = await donationCollection.updateOne(query, update);
+    res.send(result);
+    });
+
 
     app.delete('/donation/:id', async (req, res) => {
 
