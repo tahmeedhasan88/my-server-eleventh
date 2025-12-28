@@ -269,6 +269,19 @@ app.post('/donors', verifyFBToken, async (req, res) => {
 });
 
 
+app.get('/donors', async (req, res) => {
+      const query = {}
+      const { email } = req.query;
+
+      if (email) {
+        query.requesterEmail = email
+      }
+
+      const cursor = donorsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result)
+
+    })
 
 //--------------------------------------------------------- 
 
